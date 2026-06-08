@@ -8,7 +8,11 @@
 import Foundation
 
 struct MRZFieldFormatter {
-    private static let currentCentennial = Calendar.current.component(.year, from: Date()) / 100
+    // Modified by Orange Square (WOWPASS): use a fixed Gregorian calendar instead of `Calendar.current`.
+    // `Calendar.current` follows the device's calendar setting (e.g. Japanese/Buddhist), which returns a
+    // non-Gregorian year (Reiwa 8, BE 2569, ...) and corrupts the century inference of birth/expiry dates.
+    private static let gregorianCalendar = Calendar(identifier: .gregorian)
+    private static let currentCentennial = gregorianCalendar.component(.year, from: Date()) / 100
     private static let previousCentennial = Self.currentCentennial - 1
 
     private let isOCRCorrectionEnabled: Bool
@@ -144,7 +148,7 @@ struct MRZFieldFormatter {
     private func birthdate(from string: String) -> Date? {
         guard CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: string)),
               let parsedYear = Int(string.substring(0, to: 1)) else { return nil }
-        let currentYear = Calendar.current.component(.year, from: Date()) - Self.currentCentennial * 100
+        let currentYear = Self.gregorianCalendar.component(.year, from: Date()) - Self.currentCentennial * 100
         let centennial = (parsedYear > currentYear) ? String(Self.previousCentennial) : String(Self.currentCentennial)
         return dateFormatter.date(from: centennial + string)
     }
@@ -152,7 +156,7 @@ struct MRZFieldFormatter {
     private func expiryDate(from string: String) -> Date? {
         guard CharacterSet.decimalDigits.isSuperset(of: CharacterSet(charactersIn: string)),
               let parsedYear = Int(string.substring(0, to: 1)) else { return nil }
-        let currentYear = Calendar.current.component(.year, from: Date()) - Self.currentCentennial * 100
+        let currentYear = Self.gregorianCalendar.component(.year, from: Date()) - Self.currentCentennial * 100
         let boundaryYear = currentYear + 50
         let centennial = parsedYear >= boundaryYear ? String(Self.previousCentennial) : String(Self.currentCentennial)
         return dateFormatter.date(from: centennial + string)
