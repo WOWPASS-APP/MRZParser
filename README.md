@@ -1,3 +1,55 @@
+
+수정 내역은 아래로 뽑아서 채워 넣으시면 됩니다.
+
+git remote add upstream https://github.com/appintheair/MRZScanner.git
+git fetch upstream
+git log --oneline upstream/develop..HEAD
+// MRZScanner/Package.swift
+// Patched fork: Gregorian-calendar fix for MRZ date century inference (see MRZFieldFormatter).
+.package(url: "https://github.com/WOWPASS-APP/MRZParser.git", .revision("09791f10122e840fc05d89ed8b5596425c58985f"))
+
+즉 의존 사슬이 앱 → MRZScanner(fork) → MRZParser(fork) 라서, MRZParser가 사라지면 MRZScanner 해석 단계에서 먼저 깨집니다.
+
+## 이 저장소에 대해
+
+[appintheair/MRZParser](https://github.com/appintheair/MRZParser)를 fork 한 저장소입니다.
+MRZ 날짜의 세기 추론을 그레고리력 기준으로 처리하도록 수정한 버전이며,
+WOWPASS iOS 앱의 여권 인식 기능에 사용합니다. (`MRZFieldFormatter` 참조)
+
+## 이 조직에 유지되어야 하는 이유
+
+이 저장소는 앱이 직접 참조하지 않고, [MRZScanner](https://github.com/WOWPASS-APP/MRZScanner) fork의
+`Package.swift`가 참조하는 **전이 의존성**입니다.
+
+    WOWPASS iOS 앱 → MRZScanner (fork) → MRZParser (fork)
+
+**특정 커밋(`09791f10122e840fc05d89ed8b5596425c58985f`)에 고정**되어 있어,
+저장소가 삭제되거나 주소가 바뀌면 MRZScanner 해석 단계에서 실패하고
+**로컬·CI 양쪽 모두 빌드가 즉시 깨집니다.**
+
+앱 쪽에서는 아래 파일에 잠금 정보가 기록되어 있습니다.
+
+- `Tuist/Dependencies/Lockfiles/Package.resolved`
+- `WOWPASS.xcworkspace/xcshareddata/swiftpm/Package.resolved`
+
+여권 촬영 플로우에는 [NFCPassportReader](https://github.com/WOWPASS-APP/NFCPassportReader) fork도 함께 쓰입니다.
+세 저장소 중 하나만 옮기거나 지워도 빌드가 깨집니다.
+
+## 비공개로 전환할 수 없는 이유
+
+fork 저장소는 원본이 public인 경우 private으로 전환할 수 없습니다.
+GitHub의 제약이라 설정으로 우회할 수 없고, fork 관계를 해제(detach)해야만 가능합니다.
+해제는 GitHub Support 요청이 필요합니다.
+
+## 정리 계획
+
+앱 저장소로 코드를 편입해 이 fork 자체를 제거하는 방향으로 정리할 예정입니다.
+그 전까지는 **삭제 · 이름 변경 · 소유자 이전을 하지 말아주세요.**
+변경이 필요하면 모바일팀에 먼저 공유 부탁드립니다.
+ ## 이 저장소에 대해
+
+---
+
 [![Build and test](https://github.com/appintheair/MRZParser/actions/workflows/Build%20and%20test.yml/badge.svg)](https://github.com/appintheair/MRZParser/actions/workflows/Build%20and%20test.yml)
 [![codecov](https://codecov.io/gh/appintheair/MRZParser/branch/develop/graph/badge.svg?token=XS5F9MtSfq)](https://codecov.io/gh/appintheair/MRZParser)
 [![spm](https://img.shields.io/badge/SPM-compatible-brightgreen.svg)](https://github.com/appintheair/MRZParser/blob/develop/Package.swift)
